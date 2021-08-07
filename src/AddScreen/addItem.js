@@ -1,5 +1,5 @@
 import hasAuth from '../Auth/hasAuth'
-import getMyStringValue from '../Auth/getKey'
+import getKey from '../Auth/getKey'
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -17,8 +17,8 @@ const addItem = async (name,date) => {
 	}
 
 	
-	await getMyStringValue("username").then((value) => username = value).catch((err) => { console.log(err); });
-	await getMyStringValue("token").then((value) => token = value).catch((err) => { result=false });
+	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
+	await getKey("token").then((value) => token = value).catch((err) => { result=false });
 	
 	let auth;
 	await hasAuth(username,token).then((value) => auth=value)

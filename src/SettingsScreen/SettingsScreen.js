@@ -5,16 +5,29 @@ import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { Button, IconButton, Checkbox, Dialog, Portal, Snackbar} from 'react-native-paper';
 
 import removeLocalItem from '../Auth/removeLocalItem';
-import getMyStringValue from '../Auth/getKey';
+import getKey from '../Auth/getKey';
 
 import SettingBox from './SettingBox';
 
 function SettingsScreen ({navigation}) {
 
+  React.useEffect(() => {
+    const refresh = navigation.addListener('focus', () => {
+      loadAll()
+    });
+    return refresh;
+  }, [navigation]);
+
   const [showEmailPopup, setEmailPopup] = useState(false);
   const [showPassPopup, setPassPopup] = useState(false);
 
   const [currentEmail, setCurrentEmail] = useState(new String())
+
+  const loadAll = async () => {
+    getKey("email")
+    .then((email) => setCurrentEmail(email))
+    .catch((err) => console.log("An error has occured: ", err))
+  }
 
   const logout = (navigation) => {
 

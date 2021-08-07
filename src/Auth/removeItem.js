@@ -1,5 +1,5 @@
 import hasAuth from './hasAuth'
-import getMyStringValue from './getKey'
+import getKey from './getKey'
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -12,8 +12,8 @@ const removeItem = async (item) => {
 	let username;
 	let token;
 
-	await getMyStringValue("username").then((value) => username = value).catch((err) => { console.log(err); });
-	await getMyStringValue("token").then((value) => token = value).catch((err) => { result=false });
+	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
+	await getKey("token").then((value) => token = value).catch((err) => { result=false });
 	
 	let auth;
 	await hasAuth(username,token).then((value) => auth=value)

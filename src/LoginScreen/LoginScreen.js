@@ -6,22 +6,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import hasAuth from '../Auth/hasAuth'
-
-const getMyStringValue = async (key) => {
-  try {
-    return await AsyncStorage.getItem(key)
-  } catch(e) {
-    console.log(e)
-  }
-  console.log('Done.')
-}
+import hasAuth from '../Auth/hasAuth';
+import getKey from '../Auth/getKey';
 
 const checkToken = async (navigation) => {
 	let token;
 	let username;
-	await getMyStringValue("token").then((value) => token = value).catch((err) => { console.log(err); });
-	await getMyStringValue("username").then((value) => username = value).catch((err) => { console.log(err); });
+	await getKey("token").then((value) => token = value).catch((err) => { console.log(err); });
+	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
 	console.log(token)
 	console.log(username)
 
