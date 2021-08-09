@@ -5,7 +5,7 @@ import storeItems from './storeItems'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 let ip = "http://46.137.133.17:8000/get/"       // aws ip
-//let ip = "http://127.0.0.1:8000/get/"        // local ip
+// let ip = "http://127.0.0.1:8000/get/"        // local ip
 
 const getNewItems = async () => {
 	let result;
@@ -42,7 +42,7 @@ const getNewItems = async () => {
 			if (data[1][0] == "1") {
 				result=true;
 				items = data[0]
-				storeItems(data[0])
+				storeItems(items)
 			} else {
 				result=false;
 			}

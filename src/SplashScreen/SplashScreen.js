@@ -6,9 +6,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import hasAuth from '../Auth/hasAuth'
+import hasAuth from '../Auth/hasAuth';
+import getKey from '../Auth/getKey';
 
-import getKey from '../Auth/getKey'
+import getEmail from '../Auth/Users/getEmail';
 
 const checkToken = async (navigation) => {
 	let token;
@@ -20,6 +21,7 @@ const checkToken = async (navigation) => {
 	.then((value) => {
 		if (value) {
 			try {
+				getEmail();
      	  navigation.navigate('HomeScreen')
    	  } catch (error) {
    	  	console.log(error)

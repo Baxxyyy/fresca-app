@@ -2,10 +2,15 @@ import React, {useState} from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import { Button, IconButton, Checkbox, Dialog, Portal, Snackbar} from 'react-native-paper';
+import { Button, IconButton, TextInput, Dialog, Portal, Snackbar,} from 'react-native-paper';
 
 import removeLocalItem from '../Auth/removeLocalItem';
 import getKey from '../Auth/getKey';
+import storeItem from '../Auth/storeItem';
+
+import getEmail from '../Auth/Users/getEmail';
+import changeEmail from '../Auth/Users/changeEmail';
+import changePassword from '../Auth/Users/changePassword'
 
 import SettingBox from './SettingBox';
 
@@ -21,9 +26,21 @@ function SettingsScreen ({navigation}) {
   const [showEmailPopup, setEmailPopup] = useState(false);
   const [showPassPopup, setPassPopup] = useState(false);
 
-  const [currentEmail, setCurrentEmail] = useState(new String())
+  const [currentEmail, setCurrentEmail] = useState(new String());
+  const [newEmail, setNewEmail] = useState("");
+
+  const [curPass, setCurPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [conPass, setConPass] = useState("");
+
+  const [emailSnack, setEmailSnack] = useState(false);
+  const [emailSnackMsg, setESnackMsg] = useState("Email did not change");
+  
+  const [passSnack, setPassSnack] = useState(false);
+  const [passSnackMsg, setPSnackMsg] = useState("Passwords do not match")
 
   const loadAll = async () => {
+    
     getKey("email")
     .then((email) => setCurrentEmail(email))
     .catch((err) => console.log("An error has occured: ", err))
@@ -34,6 +51,7 @@ function SettingsScreen ({navigation}) {
     removeLocalItem("token")
     removeLocalItem("username")
     removeLocalItem("storedItems")
+    removeLocalItem("email")
 
     navigation.reset({
       index: 0,
@@ -41,18 +59,53 @@ function SettingsScreen ({navigation}) {
     });
   }
 
-  const changeEmail = () => {
+  const changeEmailDialog = async () => {
     setEmailPopup(false)
-
+    await changeEmail(newEmail)
+    .then((res) => {
+      if (res) {
+        setESnackMsg("Email changed")
+        setCurrentEmail(newEmail)
+        storeItem(newEmail, "email")
+        setNewEmail("")
+      } else {
+        setESnackMsg("Email did not change")
+        setNewEmail("")
+      }
+    })
+    .catch((err) => console.log("Errored while changing email as: ", err))
+    setEmailSnack(true)
   }
 
-  const changePassword = () => {
-    setPassPopup(false)  
+  const changePasswordDialog = async () => {
+    setPassPopup(false)
+    console.log("Starting here")
+    await changePassword(curPass,newPass)
+    .then((res) => {
+      console.log("We are here")
+      if (res) {
+
+        setPSnackMsg("Password changed")
+      } else {
+        setPSnackMsg("Password not changed")
+      }
+    })
+    .catch((err) => console.log("Errored: ", err))
+    console.log("Fucker")
+    setNewPass("")
+    setPassSnack(true)
   }
 
   const cancelDialog = () => {
     setEmailPopup(false)
     setPassPopup(false)
+
+    setNewEmail("")
+  }
+
+  const dismissSnack = () => {
+    setEmailSnack(false)
+    setPassSnack(false)
   }
 
   return (
@@ -84,13 +137,28 @@ function SettingsScreen ({navigation}) {
         <Dialog.Title style={styles.title}>Change Email</Dialog.Title>
         <Dialog.Content>
           <View style={styles.emailContent}>
-            <Text style={styles.topText}>Current Email: {currentEmail}</Text>
-          </View> 
+            <Text style={styles.topText}>Current Email:</Text>
+            <Text style={styles.emailText}>   {currentEmail}</Text>
+          </View>
+          <View>
+            <TextInput
+              label="New Email"
+              value={newEmail}
+              onChangeText={(text) => setNewEmail(text)}
+              mode="outlined"
+              style={styles.emailInputText}
+              theme={{ colors: {
+                primary: 'grey',
+                background: 'white',
+                underlineColor:'transparent',
+              }}}
+            />
+          </View>
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={cancelDialog}>Cancel</Button>
           <Button 
-          onPress={() => changeEmail()}
+          onPress={changeEmailDialog}
           >
           Done
           </Button>
@@ -106,18 +174,71 @@ function SettingsScreen ({navigation}) {
       style={styles.popupStyle}>
         <Dialog.Title style={styles.title}>Change Password</Dialog.Title>
         <Dialog.Content>
-          
+          <View style={styles.passContent}>
+            <TextInput
+              label="Current Password"
+              value={curPass}
+              onChangeText={(text) => setCurPass(text)}
+              mode="outlined"
+              secureTextEntry={true}
+              style={styles.emailInputText}
+              theme={{ colors: {
+                primary: 'grey',
+                background: 'white',
+                underlineColor:'transparent',
+              }}}
+            />
+             <TextInput
+              label="New Password"
+              value={newPass}
+              onChangeText={(text) => setNewPass(text)}
+              mode="outlined"
+              secureTextEntry={true}
+              style={styles.emailInputText}
+              theme={{ colors: {
+                primary: 'grey',
+                background: 'white',
+                underlineColor:'transparent',
+              }}}
+            />
+             <TextInput
+              label="New Email"
+              value={conPass}
+              onChangeText={(text) => setConPass(text)}
+              mode="outlined"
+              secureTextEntry={true}
+              style={styles.emailInputText}
+              theme={{ colors: {
+                primary: 'grey',
+                background: 'white',
+                underlineColor:'transparent',
+              }}}
+            />
+          </View>
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={cancelDialog}>Cancel</Button>
           <Button 
-          onPress={() => changePassword()}
+          onPress={() => changePasswordDialog()}
           >
           Done
           </Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
+
+    <Snackbar
+      visible={emailSnack}
+      onDismiss={dismissSnack}
+      duration={1500}
+      action={{
+        label: 'Dismiss',
+        onPress: () => {
+          setEmailSnack(false)
+        },
+      }}
+    > {emailSnackMsg}
+    </Snackbar>
 
 		<StatusBar style="dark" backgroundColor="#fdfdfd" />
 		</View>
@@ -166,16 +287,23 @@ const styles = StyleSheet.create({
   },
 
   popupStyle: {
-    height: '30%',
+    height: '35%',
+    borderRadius: 20,
   },
   title: {
     fontSize: 30,
   },
   emailContent: {
-  
+    marginBottom: 15,
   },
   topText: {
+    fontSize: 15,
+  },
+  emailText: {
     fontSize: 20,
+  },
+  emailInputText: {
+    fontSize: 20
   },
 })
 

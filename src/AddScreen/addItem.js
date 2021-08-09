@@ -4,7 +4,7 @@ import getKey from '../Auth/getKey'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 let ip = "http://46.137.133.17:8000/add/"       // aws ip
-//let ip = "http://127.0.0.1:8000/add/"        // local ip
+// let ip = "http://127.0.0.1:8000/add/"        // local ip
 
 const addItem = async (name,date) => {
 	let result;

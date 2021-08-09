@@ -1,5 +1,5 @@
-let ip = "http://46.137.133.17:8000/login/"       // aws ip
-//let ip = "http://127.0.0.1:8000/login/"        // local ip
+// let ip = "http://46.137.133.17:8000/login/"       // aws ip
+let ip = "http://127.0.0.1:8000/login/"        // local ip
 
 const hasAuth = async (username,token) => {
 	let result;

@@ -103,6 +103,14 @@ function TodayScreen ({navigation}) {
   	.then((response) => JSON.parse(response))
   	// .then((parsed_value) => setItemList(parsed_value))
   	.then((parsed_value) => {
+  		if (parsed_value == null) {
+  			setCheckList([])
+		  	setTodayList([])
+		  	setTomorrowList([])
+		  	setSoonList([])
+		  	setFetched(true)
+  			return
+  		}
   		for (var i=0; i < parsed_value.length; i++) {
   			date = parsed_value[i][1]
   			date = proccessDate(date)
@@ -384,6 +392,7 @@ const styles = StyleSheet.create({
   },
   popupStyle: {
   	height: '32%',
+  	borderRadius: 20,
   },
   newTitle: {
   	width:'90%',

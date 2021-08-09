@@ -128,6 +128,15 @@ function AllScreen ({ navigation }) {
     await getItems()
     .then((response) => JSON.parse(response))
     .then((parsed_value) => {
+      if (parsed_value == null) {
+        setMonthList([])
+        setYearList([])
+        setForeverList([])
+        setItemList([])
+        setFuzzyList(FuzzySet([],true,1))
+        setFetched(true)
+        return
+      }
       for (var i=0; i < parsed_value.length; i++) {
         date = parsed_value[i][1]
         date = proccessDate(date)
@@ -601,9 +610,11 @@ const styles = StyleSheet.create({
   },
   popupDelStyle: {
     height: '23%',
+    borderRadius: 20,
   },
   popupEditStyle: {
     height: '35%',
+    borderRadius: 20,
   },
   newTitle: {
     width:'90%',

@@ -51,6 +51,12 @@ function AddScreen ({ navigation }) {
   	.then((response) => JSON.parse(response))
   	// .then((parsed_value) => setItemList(parsed_value))
   	.then((parsed_value) => {
+  		if (parsed_value == null) {
+  			setItemList([])
+  			setFuzzyList(FuzzySet([],true,1))
+  			setFetched(true)
+  			return
+  		}
   		parsed_value = parsed_value.reverse()
   		for (var c=0; c < parsed_value.length; c++ ) {
   			okay = true
@@ -408,6 +414,7 @@ const styles = StyleSheet.create({
   },
   popupStyle: {
   	height: '35%',
+  	borderRadius: 20,
   },
   newTitle: {
   	width:'90%',

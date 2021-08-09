@@ -6,13 +6,15 @@ import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Button, IconButton } from 'react-native-paper';
 
-import getItems from '../Auth/getItems'
-import getNewItems from '../Auth/getNewItems'
+import getItems from '../Auth/getItems';
+import getNewItems from '../Auth/getNewItems';
+import getEmail from '../Auth/Users/getEmail';
 
 function HomeScreen({ navigation }) {
 
 	React.useEffect(() => {
     const refresh = navigation.addListener('focus', () => {
+      getNewItems()
       fetchItemList()
     });
     return refresh;
@@ -42,11 +44,11 @@ function HomeScreen({ navigation }) {
 
 	const fetchItemList = async () => {
 		let tmp = 0;
-		await getNewItems().then((res) => console.log(res)).catch((err) => console.log(err))
 		await getItems()
 		.then((response) => JSON.parse(response))
 		.then((parsed_value) =>  {
 			let currentDate = normaliseDate(new Date())
+			let date
 			if (parsed_value == null) {
 				setItemList([])
 				parsed_value = []
