@@ -4,9 +4,12 @@ import storeItem from '../storeItem'
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// let ip = "http://46.137.133.17:8000/change/password/"       // aws ip
-let ip = "http://127.0.0.1:8000/change/password/"        // local ip
 
+let ip = require('../ip.json')
+ip = JSON.stringify(ip)
+ip = ip.substring(7)
+ip = ip.substring(0,ip.length-2)
+ip = ip + "/change/password/"
 const changePassword = async (oldPass, newPass) => {
 	let result;
 	let token;
@@ -39,11 +42,12 @@ const changePassword = async (oldPass, newPass) => {
 			oldPass:oldPass,
 			newPass:newPass,})
 		})
-		.then((response) => {console.log(response);response.json()}) 
+		.then((response) => response.json()) 
 		.then((data) => {
 			console.log("Data gotten")
 			console.log("Data is:  ", data)
 			data = JSON.parse(data)
+			console.log(data, "Data is this")
 			if (data == '1') {
 				result = true
 			} else {

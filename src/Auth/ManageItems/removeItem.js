@@ -1,16 +1,22 @@
-import hasAuth from './hasAuth'
-import getKey from './getKey'
+import hasAuth from '../hasAuth'
+import getKey from '../getKey'
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-let ip = "http://46.137.133.17:8000/remove/"       // aws ip
-// let ip = "http://127.0.0.1:8000/remove/"        // local ip
+let ip = require('../ip.json')
+ip = JSON.stringify(ip)
+ip = ip.substring(7)
+ip = ip.substring(0,ip.length-2)
+ip = ip + "/remove/"
+
 
 const removeItem = async (item) => {
 	let result;
 	let username;
 	let token;
+
+	console.log("item is: ",item)
 
 	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
 	await getKey("token").then((value) => token = value).catch((err) => { result=false });

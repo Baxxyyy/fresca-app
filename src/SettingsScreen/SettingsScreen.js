@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { Button, IconButton, TextInput, Dialog, Portal, Snackbar,} from 'react-native-paper';
 
-import removeLocalItem from '../Auth/removeLocalItem';
+import removeLocalItem from '../Auth/ManageItems/removeLocalItem';
 import getKey from '../Auth/getKey';
 import storeItem from '../Auth/storeItem';
 
@@ -78,22 +78,25 @@ function SettingsScreen ({navigation}) {
   }
 
   const changePasswordDialog = async () => {
-    setPassPopup(false)
-    console.log("Starting here")
-    await changePassword(curPass,newPass)
-    .then((res) => {
-      console.log("We are here")
-      if (res) {
-
-        setPSnackMsg("Password changed")
-      } else {
-        setPSnackMsg("Password not changed")
-      }
-    })
-    .catch((err) => console.log("Errored: ", err))
-    console.log("Fucker")
-    setNewPass("")
-    setPassSnack(true)
+    if (conPass != newPass) {
+      setPSnackMsg("Passwords don't match")
+      setPassSnack(true)
+    } else {
+      setPassPopup(false)
+      await changePassword(curPass,newPass)
+      .then((res) => {
+        if (res) {
+          setPSnackMsg("Password changed")
+        } else {
+          setPSnackMsg("Password not changed")
+        }
+      })
+      .catch((err) => console.log("Errored: ", err))
+      setNewPass("")
+      setCurPass("")
+      setConPass("")
+      setPassSnack(true)
+    }
   }
 
   const cancelDialog = () => {
@@ -171,7 +174,7 @@ function SettingsScreen ({navigation}) {
       dismissable={false}
       visible={showPassPopup} 
       onDismiss={cancelDialog}
-      style={styles.popupStyle}>
+      style={styles.popupPassStyle}>
         <Dialog.Title style={styles.title}>Change Password</Dialog.Title>
         <Dialog.Content>
           <View style={styles.passContent}>
@@ -202,7 +205,7 @@ function SettingsScreen ({navigation}) {
               }}}
             />
              <TextInput
-              label="New Email"
+              label="Confirm Password"
               value={conPass}
               onChangeText={(text) => setConPass(text)}
               mode="outlined"
@@ -214,6 +217,7 @@ function SettingsScreen ({navigation}) {
                 underlineColor:'transparent',
               }}}
             />
+
           </View>
         </Dialog.Content>
         <Dialog.Actions>
@@ -224,7 +228,20 @@ function SettingsScreen ({navigation}) {
           Done
           </Button>
         </Dialog.Actions>
+
       </Dialog>
+      <Snackbar
+        visible={passSnack}
+        onDismiss={dismissSnack}
+        duration={1500}
+        action={{
+          label: 'Dismiss',
+          onPress: () => {
+            setPassSnack(false)
+          },
+        }}
+      >{passSnackMsg}
+      </Snackbar>
     </Portal>
 
     <Snackbar
@@ -239,6 +256,7 @@ function SettingsScreen ({navigation}) {
       }}
     > {emailSnackMsg}
     </Snackbar>
+    
 
 		<StatusBar style="dark" backgroundColor="#fdfdfd" />
 		</View>
@@ -288,6 +306,10 @@ const styles = StyleSheet.create({
 
   popupStyle: {
     height: '35%',
+    borderRadius: 20,
+  },
+  popupPassStyle: {
+    height: '43%',
     borderRadius: 20,
   },
   title: {

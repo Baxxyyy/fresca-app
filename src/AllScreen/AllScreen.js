@@ -9,12 +9,24 @@ import { Button, IconButton, TextInput, Dialog, Portal, Snackbar, Searchbar } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import getNewItems from '../Auth/getNewItems';
 import addItem from '../AddScreen/addItem';
-import getItems from '../Auth/getItems';
-import removeItem from '../Auth/removeItem';
+
+import removeFromDateList from '../Auth/DateManage/removeFromDateList';
+import findDatePlace from '../Auth/DateManage/findDatePlace';
+import removeLocalFood from '../Auth/ManageItems/removeLocalFood';
+
+
+import getKey from '../Auth/getKey';
+
 
 function AllScreen ({ navigation }) {
+
+  React.useEffect(() => {
+    const refresh = navigation.addListener('focus', () => {
+      createMainLists();
+    });
+    return refresh;
+  }, [navigation]);
 
   const [fetched, setFetched] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date()); 
@@ -57,25 +69,26 @@ function AllScreen ({ navigation }) {
   }
 
   const removeExpired = async (item) => {
-    let result;
-    await removeItem(item)
-    .then((res) => result = res)
-    .catch((err) => console.log(err))
-    return result
+    let res = await removeLocalFood(item)
+    return res
   }
 
-  const removeUpdate = async (item) => {
+  const removeUpdate = async (itemList, display) => {
     let result;
-    await removeExpired(item)
-    .then((res) => result = res)
-    .catch((err) => console.log(err))
-    await getNewItems()
-    .then(() => createMainLists())
-    .catch((err) => console.log(err))
-    return result;
+    for (var i=0; i < itemList.length; i++) {
+      result = await removeExpired(itemList[i])
+      if (!result) {
+        break
+      }
+    }
+    if (display) {
+      setSnackState(result)
+      setSnackVisible(true)
+    }
   }
 
   const proccessDate = (date) => {
+    console.log(date, "date")
     let first = date.indexOf('-')
     let second = date.indexOf('-',first+1)
 
@@ -109,26 +122,33 @@ function AllScreen ({ navigation }) {
   }
 
   const sortListByDate = (newList) => {
-    newList.sort((a, b) => { 
-      let date_a =  proccessDate(a[1])
-      let date_b = proccessDate(b[1])
-      return date_a - date_b;
+    newList.sort((a, b) => {
+      return new Date(a.numDate) - new Date(b.numDate);
     })
     return newList; 
   }
 
   const createMainLists = async () => {
+    let newRemoveList = [];
     let newMonthList = [];
     let newYearList = [];
     let newForeverList = [];
 
+    let today = normaliseDate(new Date())
+    let monthDate = normaliseDate(new Date()).setMonth(today.getMonth()+1)
+    let yearDate = normaliseDate(new Date()).setFullYear(today.getFullYear() +1)
+
+    let removeIndex = await findDatePlace(today)
+    let monthIndex = await findDatePlace(monthDate)
+    let yearIndex = await findDatePlace(yearDate)
+
     let date;
     let currentDate = normaliseDate(new Date())
 
-    await getItems()
+    await getKey("DateItems")
     .then((response) => JSON.parse(response))
     .then((parsed_value) => {
-      if (parsed_value == null) {
+      if (parsed_value == []) {
         setMonthList([])
         setYearList([])
         setForeverList([])
@@ -137,36 +157,29 @@ function AllScreen ({ navigation }) {
         setFetched(true)
         return
       }
-      for (var i=0; i < parsed_value.length; i++) {
-        date = parsed_value[i][1]
-        date = proccessDate(date)
-        if (date < currentDate) {
-          removeExpired(parsed_value[i])
-        } else if (checkForMonth(date,currentDate)) {
-          newMonthList.push(parsed_value[i])
-        } else if (checkForYear(date, currentDate)) {
-          newYearList.push(parsed_value[i])
-        } else {
-          newForeverList.push(parsed_value[i])
-        }
-      }
+
+      newRemoveList = parsed_value.slice(0,removeIndex)
+      newMonthList = parsed_value.slice(removeIndex,monthIndex)
+      newYearList = parsed_value.slice(monthIndex,yearIndex)
+      newForeverList = parsed_value.slice(yearIndex,parsed_value.length)
+      
       let newList = newMonthList.concat(newYearList,newForeverList)
+      
       let temp = FuzzySet([],true,1)
       for (var i=0; i < newList.length; i++) {
-        temp.add((newList[i][0].toUpperCase()))
+        temp.add((newList[i].name.toUpperCase()))
       }
       setFuzzyList(temp)
       setItemList(newList)
     })
     .catch((err) => console.log(err))
 
-    setMonthList(sortListByDate(newMonthList))
-    setYearList(sortListByDate(newYearList))
-    setForeverList(sortListByDate(newForeverList))
-    setFetched(true)
-  }
+    removeUpdate(newRemoveList,false)
 
-  if (!fetched) {createMainLists()}
+    setMonthList(newMonthList)
+    setYearList(newYearList)
+    setForeverList(newForeverList)
+  }
 
   // ------ Search Code -----
 
@@ -193,7 +206,7 @@ function AllScreen ({ navigation }) {
     for (var i=0; i < Math.min(matched.length,10); i++) {
       var newTempList = []
       for (var x=0; x < itemList.length; x++) {
-        if (matched[i][1] == (itemList[x][0]).toUpperCase()) {
+        if (matched[i][1] == (itemList[x].name).toUpperCase()) {
           newTempList.push(itemList[x])
         }
       }
@@ -208,7 +221,7 @@ function AllScreen ({ navigation }) {
   const hideDelDialog = async () => {
     setDeleteVisible(false)
     let result;
-    await removeUpdate(deleteItem).then((res) => result = res)
+    await removeUpdate([deleteItem],true).then((res) => result = res)
     setSnackState(result)
     setSnackVisible(true)
   }
@@ -238,6 +251,7 @@ function AllScreen ({ navigation }) {
   const hideEditDialog = async () => {
     setEditVisible(false);
     let result = false;
+    console.log(editName,editDate, "edit details")
     await addItem(editName,editDate)
     .then((res) => result = res)
     .catch((err) => console.log(err, "error"))
@@ -246,7 +260,7 @@ function AllScreen ({ navigation }) {
       setSnackVisible(true)
       return
     }
-    await removeUpdate(editItem)
+    await removeExpired(editItem)
     .then((res) => console.log(res, "result"))
     .then(() => console.log(monthList, "Month list at end"))
     .catch((err) => console.log(err, "error"))
@@ -254,8 +268,8 @@ function AllScreen ({ navigation }) {
 
   const showEditDialog = (item) => {
     setEditItem(item);
-    setEditDate(item[1])
-    setEditName(item[0]);
+    setEditDate(item.date)
+    setEditName(item.name);
     setEditVisible(true);
   }
 
@@ -319,8 +333,8 @@ function AllScreen ({ navigation }) {
               borderBottomWidth: 2,
               borderBottomColor: 'black',
             }}>
-              <Text style={styles.Label}>{c[0]} </Text>
-              <Text style={styles.Date}>{c[1]} </Text>
+              <Text style={styles.Label}>{c.name} </Text>
+              <Text style={styles.Date}>{c.date} </Text>
               <View style={styles.iconBox}>
                 <IconButton
                   icon={require("../../assets/pencil.png")}
@@ -358,8 +372,8 @@ function AllScreen ({ navigation }) {
               borderBottomWidth: 2,
               borderBottomColor: 'black',
             }}>
-              <Text style={styles.Label}>{c[0]} </Text>
-              <Text style={styles.Date}>{c[1]} </Text>
+              <Text style={styles.Label}>{c.name} </Text>
+              <Text style={styles.Date}>{c.date} </Text>
               <View style={styles.iconBox}>
                 <IconButton
                   icon={require("../../assets/pencil.png")}
@@ -397,8 +411,8 @@ function AllScreen ({ navigation }) {
               borderBottomWidth: 2,
               borderBottomColor: 'black',
             }}>
-              <Text style={styles.Label}>{c[0]} </Text>
-              <Text style={styles.Date}>{c[1]} </Text>
+              <Text style={styles.Label}>{c.name} </Text>
+              <Text style={styles.Date}>{c.date} </Text>
               <View style={styles.iconBox}>
                 <IconButton
                   icon={require("../../assets/pencil.png")}
@@ -434,8 +448,8 @@ function AllScreen ({ navigation }) {
               borderBottomWidth: 2,
               borderBottomColor: 'black',
             }}>
-              <Text style={styles.Label}>{c[0]} </Text>
-              <Text style={styles.Date}>{c[1]} </Text>
+              <Text style={styles.Label}>{c.name} </Text>
+              <Text style={styles.Date}>{c.date} </Text>
               <View style={styles.iconBox}>
                 <IconButton
                   icon={require("../../assets/pencil.png")}

@@ -6,15 +6,19 @@ import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Button, IconButton } from 'react-native-paper';
 
-import getItems from '../Auth/getItems';
-import getNewItems from '../Auth/getNewItems';
+import getItems from '../Auth/ManageItems/getItems';
+import getNewItems from '../Auth/ManageItems/getNewItems';
+
 import getEmail from '../Auth/Users/getEmail';
+
+import addItem from '../AddScreen/addItem';
+import syncItems from '../Auth/ManageItems/syncItems';
+import storeItems from '../Auth/storeItems';
 
 function HomeScreen({ navigation }) {
 
 	React.useEffect(() => {
     const refresh = navigation.addListener('focus', () => {
-      getNewItems()
       fetchItemList()
     });
     return refresh;
@@ -56,8 +60,7 @@ function HomeScreen({ navigation }) {
 				setItemList(parsed_value)
 			}
 			for (var i=0; i < parsed_value.length; i++) {
-  			date = parsed_value[i][1]
-  			date = proccessDate(date)
+  			date = new Date(parsed_value[i].numDate)
   			if (+date == +currentDate) {
   				tmp += 1
 				}
@@ -65,6 +68,7 @@ function HomeScreen({ navigation }) {
 		})
 		.catch((err) => console.log(err));
 		setOutItems(tmp)
+		syncItems();
 	}
 
 	return (
@@ -72,9 +76,20 @@ function HomeScreen({ navigation }) {
 			<View style={styles.header}>
 				<Text style={styles.headerText}>Home</Text>
 				<IconButton
+					style={{alignSelf: 'center',marginLeft: 'auto'}}
 					icon={require("../../assets/cog.png")}
 					size={30}
 					onPress={() => {navigation.navigate('SettingsScreen')}}
+				/>
+				<IconButton
+					icon={require("../../assets/reload.png")}
+					size={30}
+					onPress={() => {storeItems("addItems",["hip","27-8-2021"])}}
+				/>
+				<IconButton
+					icon={require("../../assets/reload.png")}
+					size={30}
+					onPress={() => {syncItems()}}
 				/>
 			</View>
 			<View style={styles.options}>

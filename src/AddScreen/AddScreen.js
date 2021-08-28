@@ -11,8 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import addItem from './addItem'
-import getItems from '../Auth/getItems'
-import getNewItems from '../Auth/getNewItems'
+import getItems from '../Auth/ManageItems/getItems'
+import getNewItems from '../Auth/ManageItems/getNewItems'
 
 function AddScreen ({ navigation }) {
 
@@ -49,7 +49,6 @@ function AddScreen ({ navigation }) {
   	let okay;
   	await getItems()
   	.then((response) => JSON.parse(response))
-  	// .then((parsed_value) => setItemList(parsed_value))
   	.then((parsed_value) => {
   		if (parsed_value == null) {
   			setItemList([])
@@ -61,7 +60,7 @@ function AddScreen ({ navigation }) {
   		for (var c=0; c < parsed_value.length; c++ ) {
   			okay = true
   			for (var i=0; i < newList.length; i++) {
-  				if (parsed_value[c][0].toUpperCase() == newList[i][0].toUpperCase()) {
+  				if (parsed_value[c].name.toUpperCase() == newList[i].name.toUpperCase()) {
   					okay = false
   					break;
   				}
@@ -73,7 +72,7 @@ function AddScreen ({ navigation }) {
   		setItemList(newList)
   		let temp = FuzzySet([],true,1)
   		for (var i=0; i < newList.length; i++) {
-  			temp.add((newList[i][0]).toUpperCase())
+  			temp.add((newList[i].name).toUpperCase())
   		}
   		setFuzzyList(temp)
   	})
@@ -82,7 +81,7 @@ function AddScreen ({ navigation }) {
   }
 
   const refreshItems = async () => {
-  	await getNewItems().then((res) => console.log(res)).catch((err) => console.log(err))
+  	await getItems().then((res) => console.log(res)).catch((err) => console.log(err))
   	await loadItems().catch((err) => console.log(err))
   }
 
@@ -177,10 +176,10 @@ function AddScreen ({ navigation }) {
 
   const getDateFromName = (name) => {
 		for (var i=0; i < itemList.length; i++) {
-			if ((itemList[i][0]).toUpperCase() == name) {
+			if ((itemList[i].name).toUpperCase() == name) {
 				setSearchQuery('');
 				setSearch(false);
-				return proccessDate(itemList[i][1])
+				return new Date(itemList[i].numDate)
 			}
 		}
   }
@@ -303,7 +302,7 @@ function AddScreen ({ navigation }) {
 					{!search && ((itemList).map((c, i) => {
 						return [
 						<Button
-							key = {c[0]}
+							key = {c.name}
 							color={colours[i % 2]}
 							labelStyle={styles.quickLabel}  
 							style={styles.quickButton}
@@ -312,13 +311,13 @@ function AddScreen ({ navigation }) {
 							onPress={() => {
 								console.log(c)
 								if (!newItem) {
-									setName(c[0])
+									setName(c.name)
 									setQuickShow(true)
-									setCurrentDate(proccessDate(c[1]))
+									setCurrentDate(new Date(c.numDate))
 								}
 							}}
 							>
-							{c[0]}
+							{c.name}
 						</Button>
 						]
 					}))}

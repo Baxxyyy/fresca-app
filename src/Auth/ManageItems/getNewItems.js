@@ -1,11 +1,17 @@
-import hasAuth from './hasAuth'
-import getKey from './getKey'
-import storeItems from './storeItems'
+import hasAuth from '../hasAuth'
+import getKey from '../getKey'
+import storeItems from '../storeItems'
+
+import Item from './Item';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let ip = "http://46.137.133.17:8000/get/"       // aws ip
-// let ip = "http://127.0.0.1:8000/get/"        // local ip
+let ip = require('../ip.json')
+ip = JSON.stringify(ip)
+ip = ip.substring(7)
+ip = ip.substring(0,ip.length-2)
+ip = ip + "/get/"
+
 
 const getNewItems = async () => {
 	let result;
@@ -42,7 +48,13 @@ const getNewItems = async () => {
 			if (data[1][0] == "1") {
 				result=true;
 				items = data[0]
-				storeItems(items)
+				console.log(items,"ITEMSFGKLL")
+				for (var i=0; i < items.length; i++) {
+					let tmp = new Item(items[i][0], items[i][1])
+					items[i] = tmp
+				}
+				
+				storeItems("storedItems", items)
 			} else {
 				result=false;
 			}

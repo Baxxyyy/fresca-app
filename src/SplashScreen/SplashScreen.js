@@ -10,6 +10,8 @@ import hasAuth from '../Auth/hasAuth';
 import getKey from '../Auth/getKey';
 
 import getEmail from '../Auth/Users/getEmail';
+import getNewItems from '../Auth/ManageItems/getNewItems';
+import createDateList from '../Auth/DateManage/createDateList';
 
 const checkToken = async (navigation) => {
 	let token;
@@ -22,6 +24,8 @@ const checkToken = async (navigation) => {
 		if (value) {
 			try {
 				getEmail();
+				getNewItems();
+				createDateList();
      	  navigation.navigate('HomeScreen')
    	  } catch (error) {
    	  	console.log(error)

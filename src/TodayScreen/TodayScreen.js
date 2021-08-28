@@ -8,9 +8,9 @@ import { Tab, TabView } from 'react-native-elements';
 
 import SwipeableViews from 'react-swipeable-views-native';
 
-import getItems from '../Auth/getItems'
-import getNewItems from '../Auth/getNewItems'
-import removeItem from '../Auth/removeItem'
+import getItems from '../Auth/ManageItems/getItems'
+import getNewItems from '../Auth/ManageItems/getNewItems'
+import removeItem from '../Auth/ManageItems/removeItem'
 
 
 function TodayScreen ({navigation}) {

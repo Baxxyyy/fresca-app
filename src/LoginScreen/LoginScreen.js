@@ -14,8 +14,6 @@ const checkToken = async (navigation) => {
 	let username;
 	await getKey("token").then((value) => token = value).catch((err) => { console.log(err); });
 	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
-	console.log(token)
-	console.log(username)
 
 	await hasAuth(username,token)
 	.then((value) => {
@@ -34,8 +32,6 @@ const checkToken = async (navigation) => {
 
 
 function LoginScreen({ navigation }) {
-
-
 
 	checkToken(navigation)
 
