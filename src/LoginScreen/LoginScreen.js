@@ -4,41 +4,15 @@ import React from 'react';
 
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import hasAuth from '../Auth/hasAuth';
 import getKey from '../Auth/getKey';
 
-const checkToken = async (navigation) => {
-	let token;
-	let username;
-	await getKey("token").then((value) => token = value).catch((err) => { console.log(err); });
-	await getKey("username").then((value) => username = value).catch((err) => { console.log(err); });
-
-	await hasAuth(username,token)
-	.then((value) => {
-		if (value) {
-			try {
-     	  navigation.navigate('HomeScreen')
-   	  } catch (error) {
-      	console.log(error);
-      }
-		} else {
-			
-		}
-	})
-	.catch((err) => { console.log(err); });
-}
-
-
 function LoginScreen({ navigation }) {
-
-	checkToken(navigation)
 
 	return (
 	<View style={styles.container}>
 	<View style={styles.top}>
-		  <Text style = {styles.title}> Food App </Text>
+		  <Text style = {styles.title}> Fresca </Text>
 	</View>
 		<View style={styles.bottom}>
 		  <View style={styles.text}>
@@ -51,6 +25,15 @@ function LoginScreen({ navigation }) {
 				 	navigation.navigate('loginBox')
 				 }}
 				 > Login
+				</Button>
+				<Button 
+				 mode="contained"
+				 color="#fbffea"
+				 style= {styles.button}
+				 onPress = {() => {
+				 	navigation.navigate('RegisterScreen')
+				 }}
+				 > Register
 				</Button>
 			</View>
 		</View>
@@ -95,6 +78,7 @@ const styles = StyleSheet.create({
 	button: {
 		borderWidth :2,
 		borderColor: 'black',
+		marginBottom: 20,
 	},
 	loginButton: {
 		justifyContent: 'center',

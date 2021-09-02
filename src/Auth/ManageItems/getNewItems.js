@@ -42,13 +42,12 @@ const getNewItems = async () => {
 		.then((data) => {
 			data = JSON.parse(data)
 			if (data.length == 1) {
-				return result // must be '0'
+				return result // data must be '0'
 			}
 
 			if (data[1][0] == "1") {
 				result=true;
 				items = data[0]
-				console.log(items,"ITEMSFGKLL")
 				for (var i=0; i < items.length; i++) {
 					let tmp = new Item(items[i][0], items[i][1])
 					items[i] = tmp

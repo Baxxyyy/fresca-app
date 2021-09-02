@@ -5,6 +5,11 @@ const createDateList = async () => {
 	let foods = await getItems()
 	foods = JSON.parse(foods)
 
+	if (foods == null) {
+		storeItems("DateItems", [])
+		return
+	}
+
 	foods.sort((a, b) => {
     return new Date(a.numDate) - new Date(b.numDate);
   })

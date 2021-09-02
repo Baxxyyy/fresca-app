@@ -29,7 +29,7 @@ function HomeScreen({ navigation }) {
 
 	const normaliseDate = (date) => {
   	date.setHours(0,0,0,0)
-  	date.setDate(date.getDate()+1)
+  	date.setDate(date.getDate())
   	return date
   }
 
@@ -48,6 +48,7 @@ function HomeScreen({ navigation }) {
 
 	const fetchItemList = async () => {
 		let tmp = 0;
+		await syncItems();
 		await getItems()
 		.then((response) => JSON.parse(response))
 		.then((parsed_value) =>  {
@@ -68,7 +69,6 @@ function HomeScreen({ navigation }) {
 		})
 		.catch((err) => console.log(err));
 		setOutItems(tmp)
-		syncItems();
 	}
 
 	return (
@@ -80,16 +80,6 @@ function HomeScreen({ navigation }) {
 					icon={require("../../assets/cog.png")}
 					size={30}
 					onPress={() => {navigation.navigate('SettingsScreen')}}
-				/>
-				<IconButton
-					icon={require("../../assets/reload.png")}
-					size={30}
-					onPress={() => {storeItems("addItems",["hip","27-8-2021"])}}
-				/>
-				<IconButton
-					icon={require("../../assets/reload.png")}
-					size={30}
-					onPress={() => {syncItems()}}
 				/>
 			</View>
 			<View style={styles.options}>

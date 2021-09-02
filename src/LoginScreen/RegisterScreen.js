@@ -2,63 +2,55 @@ import { StatusBar } from 'expo-status-bar';
 
 import React, {useState} from 'react';
 
-import { StyleSheet, Text, View} from 'react-native';
-import { TextInput, Button, IconButton, Snackbar} from 'react-native-paper';
+import { StyleSheet, Text, View } from 'react-native';
+import { TextInput, Button, IconButton, Snackbar } from 'react-native-paper';
 
-
+import getKey from '../Auth/getKey';
 import storeItem from '../Auth/storeItem';
+import storeItems from '../Auth/storeItems';
+
+import register from '../Auth/Users/register';
 import getNewItems from '../Auth/ManageItems/getNewItems';
 import createDateList from '../Auth/DateManage/createDateList';
-import getEmail from '../Auth/Users/getEmail';
 
-import axios from 'axios';
 
-let ip = require('../Auth/ip.json')
-ip = JSON.stringify(ip)
-ip = ip.substring(7)
-ip = ip.substring(0,ip.length-2)
-ip = ip + "/login/"
-
-function LoginBoxes({ navigation }) {
+const RegisterScreen = ({ navigation }) => {
 
 	const [username, setUsername] = useState("")
+	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
+	const [passwordCon, setPasswordCon] = useState("")
 
 	const [snackVisible, setSnackVisible] = useState(false)
 	const [snackState, setSnackState] = useState("")
 
 
-	const handleNav = async (navigation, token) => {
-		await storeItem(token, "token")
-		await storeItem(username, "username")
-		await getEmail();
-		await getNewItems();
-		await createDateList();
-		navigation.navigate("HomeScreen")
-	}
-
-
-	const handleLogin = async (navigation) => {
-		await fetch(ip, {
-	  method: 'POST',
-	  headers: { 
-	           'Accept': 'application/json',
-	           'Content-Type': 'application/json' 
-	           },
-	  body: JSON.stringify({username:username,password:password})
-		})
-		.then((response) => response.json()) 
-		.then((data) => {
-			data = JSON.parse(data)
-			if (data[0] == "1") {
-				handleNav(navigation, data[1])
+	const handleReg = async (navigation) => {
+		await register(username,email,password,passwordCon)
+		.then((res) => {
+			if (res[0] == '1') {
+				handleNav(navigation, res[1])
 			} else {
+				if (res == "Email is not valid") {
+					setEmail("")
+				} else if (res == "username taken") {
+					setUsername("")
+				}
 				setPassword("")
-				setSnackState("Username/Password invalid, please try again.")
+				setPasswordCon("")
+				setSnackState(res)
 				setSnackVisible(true)
 			}
 		})
-		.catch((err) => { console.log(err); });
+	}
+
+	const handleNav = async (navigation, token) => {
+		await storeItem(token, "token")
+		await storeItem(username, "username")
+		await storeItem(email, "email")
+		await storeItems("storedItems", [])
+		await storeItems("DateItems", [])
+		navigation.navigate("HomeScreen")
 	}
 
 	const onDismissSnack = () => {
@@ -74,7 +66,7 @@ function LoginBoxes({ navigation }) {
 					size={30}
 					onPress={() => navigation.goBack()}
 				/>
-			  <Text style = {styles.title}> Login </Text>
+			  <Text style = {styles.title}> Register </Text>
 			</View>
 			<View style={styles.box}>
 				<TextInput
@@ -83,6 +75,15 @@ function LoginBoxes({ navigation }) {
 					style={styles.input}
 					mode='outlined'
 					onChangeText={(value) => {setUsername(value)}}
+					value={username}
+				/>
+				<TextInput
+					theme={{ colors: { primary: 'black',underlineColor:'transparent',}}}
+					label="Email"
+					style={styles.input}
+					mode='outlined'
+					onChangeText={(value) => {setEmail(value)}}
+					value={email}
 				/>
 				<TextInput
 					theme={{ colors: { primary: 'black',underlineColor:'transparent',}}}
@@ -93,11 +94,20 @@ function LoginBoxes({ navigation }) {
 					onChangeText={(value) => {setPassword(value)}}
 					value={password}
 				/>
+				<TextInput
+					theme={{ colors: { primary: 'black',underlineColor:'transparent',}}}
+					secureTextEntry={true}
+					label="Confirm password"
+					style={styles.input}
+					mode='outlined'
+					onChangeText={(value) => {setPasswordCon(value)}}
+					value={passwordCon}
+				/>
 				<Button
 					color="#fbffea"
 					style={styles.button}
 					mode="contained"
-					onPress={() => handleLogin(navigation)}
+					onPress={() => handleReg(navigation)}
 				> Submit
 				</Button>
 			</View>
@@ -115,7 +125,7 @@ function LoginBoxes({ navigation }) {
 			</Snackbar>
 			<StatusBar style="light" backgroundColor="black" />
 		</View>
-	)	
+	)
 }
 
 const styles = StyleSheet.create({
@@ -177,4 +187,4 @@ const styles = StyleSheet.create({
 	}
 });
 
-export default LoginBoxes;
+export default RegisterScreen;

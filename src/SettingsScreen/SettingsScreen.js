@@ -4,13 +4,16 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { Button, IconButton, TextInput, Dialog, Portal, Snackbar,} from 'react-native-paper';
 
-import removeLocalItem from '../Auth/ManageItems/removeLocalItem';
 import getKey from '../Auth/getKey';
 import storeItem from '../Auth/storeItem';
 
+import removeLocalItem from '../Auth/ManageItems/removeLocalItem';
+import syncItems from '../Auth/ManageItems/syncItems';
+
+
 import getEmail from '../Auth/Users/getEmail';
 import changeEmail from '../Auth/Users/changeEmail';
-import changePassword from '../Auth/Users/changePassword'
+import changePassword from '../Auth/Users/changePassword';
 
 import SettingBox from './SettingBox';
 
@@ -48,10 +51,17 @@ function SettingsScreen ({navigation}) {
 
   const logout = (navigation) => {
 
+    syncItems();
+
     removeLocalItem("token")
     removeLocalItem("username")
     removeLocalItem("storedItems")
+    removeLocalItem("DateItems")
     removeLocalItem("email")
+
+    // shouldnt need to be deleted, but just in case
+    removeLocalItem("removalItems")
+    removeLocalItem("addItems")
 
     navigation.reset({
       index: 0,

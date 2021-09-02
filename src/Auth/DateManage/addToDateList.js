@@ -9,7 +9,8 @@ const addToDateList = async (item) => {
 
 	let insertPoint = await findDatePlace(new Date(item.numDate))
 	foods.splice(insertPoint,0,item)
-	storeItems("DateItems", foods)
+	
+	await storeItems("DateItems", foods)
 }
 
 export default addToDateList;

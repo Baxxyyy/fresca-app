@@ -10,7 +10,7 @@ const removeLocalFood = async (item) => {
 	let result = false;
 
 	for (var i = 0; i < foods.length; i++) {
-		if (foods[i][0] == item[0] && foods[i][1] == item[1]) {
+		if (foods[i].name == item.name && foods[i].date == item.date) {
 			foods.splice(i,1)
 			break
 		}

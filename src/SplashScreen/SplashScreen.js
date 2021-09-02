@@ -13,6 +13,13 @@ import getEmail from '../Auth/Users/getEmail';
 import getNewItems from '../Auth/ManageItems/getNewItems';
 import createDateList from '../Auth/DateManage/createDateList';
 
+const fetchThings = async (navigation) => {
+	await getEmail();
+	await getNewItems();
+	await createDateList();
+	navigation.navigate('HomeScreen')
+}
+
 const checkToken = async (navigation) => {
 	let token;
 	let username;
@@ -23,10 +30,7 @@ const checkToken = async (navigation) => {
 	.then((value) => {
 		if (value) {
 			try {
-				getEmail();
-				getNewItems();
-				createDateList();
-     	  navigation.navigate('HomeScreen')
+				fetchThings(navigation)
    	  } catch (error) {
    	  	console.log(error)
       }	

@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import FuzzySet from 'fuzzyset'
 
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
@@ -10,11 +10,20 @@ import { Button, IconButton, TextInput, Dialog, Portal, Snackbar, Searchbar } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import addItem from './addItem'
-import getItems from '../Auth/ManageItems/getItems'
-import getNewItems from '../Auth/ManageItems/getNewItems'
+import addItem from './addItem';
+import getItems from '../Auth/ManageItems/getItems';
+import getNewItems from '../Auth/ManageItems/getNewItems';
+import syncItems from '../Auth/ManageItems/syncItems';
 
 function AddScreen ({ navigation }) {
+
+	useEffect(() => {
+    const refresh = navigation.addListener('focus', () => {
+      syncItems();
+      loadItems();
+    });
+    return refresh;
+  }, [navigation]);
 
 	// States or constants
 
@@ -85,6 +94,8 @@ function AddScreen ({ navigation }) {
   	await loadItems().catch((err) => console.log(err))
   }
 
+  // Dialog functions
+
 	const showDialog = () => {
 		setVisible(true)
 		setNewItem(true)
@@ -100,13 +111,13 @@ function AddScreen ({ navigation }) {
 		showSnack()
 	}
 
-	if (!fetched) {loadItems()}
-
 	const cancelDialog = () => {
 		setNewItem(false)
 		setVisible(false)
 		setCurrentDate(date)
 	}
+
+	// Helper for date
 
 	const displayDate = (newDate) => {
 		try {
@@ -119,6 +130,8 @@ function AddScreen ({ navigation }) {
 		}
 	}
 
+	// Change for Date Picker
+
 	const onChange = (event, selectedDate) => {
 		if (event.type == 'dissmissed') {
 			setShow(false);
@@ -127,6 +140,8 @@ function AddScreen ({ navigation }) {
     setShow(false);
     setCurrentDate(selectedDate);
   };
+
+  // Search functions
 
   const matchWordToItemList = (word) => {
   	return fuzzyList.get(word.toUpperCase(),0.1,0.1)
@@ -162,6 +177,8 @@ function AddScreen ({ navigation }) {
     setCurrentDate(date)
   };
 
+  // Quick adding from item list at bottom
+
   const proccessDate = (date) => {
   	let first = date.indexOf('-')
   	let second = date.indexOf('-',first+1)
@@ -191,6 +208,8 @@ function AddScreen ({ navigation }) {
 		setCurrentDate(date)
 		showSnack()
   }
+
+  // Snack functions
 
   const showSnack = () => {
   	setSnackVisible(true)

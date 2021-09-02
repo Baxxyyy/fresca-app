@@ -9,6 +9,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 
 import LoginScreen from './src/LoginScreen/LoginScreen';
 import LoginBoxes from './src/LoginScreen/LoginBoxes';
+import RegisterScreen from './src/LoginScreen/RegisterScreen';
 
 import HomeScreen from './src/HomeScreen/HomeScreen';
 import SplashScreen from './src/SplashScreen/SplashScreen';
@@ -45,6 +46,11 @@ function App() {
         <Stack.Screen
           name="loginBox"
           component={LoginBoxes}
+          options={{ headerShown: false}}
+        />
+        <Stack.Screen
+          name="RegisterScreen"
+          component={RegisterScreen}
           options={{ headerShown: false}}
         />
         <Stack.Screen

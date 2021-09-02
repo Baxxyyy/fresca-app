@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 
-import React, {useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import FuzzySet from 'fuzzyset'
 
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import { Button, IconButton, TextInput, Dialog, Portal, Snackbar, Searchbar } from 'react-native-paper';
+import { StyleSheet, Text, View, ScrollView, AppState, FlatList } from 'react-native';
+import { Button, IconButton, TextInput, Dialog, Portal, Snackbar,
+         Searchbar, ActivityIndicator, Colors } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,22 +14,36 @@ import addItem from '../AddScreen/addItem';
 
 import removeFromDateList from '../Auth/DateManage/removeFromDateList';
 import findDatePlace from '../Auth/DateManage/findDatePlace';
-import removeLocalFood from '../Auth/ManageItems/removeLocalFood';
 
+import removeLocalFood from '../Auth/ManageItems/removeLocalFood';
+import syncItems from '../Auth/ManageItems/syncItems';
 
 import getKey from '../Auth/getKey';
 
-
 function AllScreen ({ navigation }) {
 
-  React.useEffect(() => {
+  useEffect(() => {
     const refresh = navigation.addListener('focus', () => {
+      syncItems();
       createMainLists();
     });
     return refresh;
   }, [navigation]);
 
-  const [fetched, setFetched] = useState(false);
+  const appState = useRef(AppState.currentState);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", nextAppState => {
+      if (appState.current.match(/inactive|background/)) {
+        syncItems()
+      }
+    });
+    
+    try {
+      subscription.remove()
+    } catch (err) {}
+  }, []);
+
+  const [fetching, setFetching] = useState(false)
   const [currentDate, setCurrentDate] = useState(new Date()); 
 
   const [itemList, setItemList] = useState(new Array());
@@ -36,18 +51,21 @@ function AllScreen ({ navigation }) {
   const [fuzzyList, setFuzzyList] = useState(new FuzzySet());
   const [searchList, setSearchList] = useState(new Array());
 
-  const [monthList, setMonthList] = useState(new Array());
-  const [yearList, setYearList] = useState(new Array());
-  const [foreverList, setForeverList] = useState(new Array());
+  // const [monthList, setMonthList] = useState(new Array());
+  // const [yearList, setYearList] = useState(new Array());
+  // const [foreverList, setForeverList] = useState(new Array());
+
+  const [formatedList, setFormatedList] = useState(new Array());
 
   const dayLength = 86400000;
 
-  let colourCount = -1;
   let colours = ['#fbffea','#f7ffad'];
+  let count = 0
 
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const [displayMain, setMainDisplay] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [displayMain, setMainDisplay] = useState(false);
   const [displaySearch, setSearchDisplay] = useState(false);
 
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -73,7 +91,7 @@ function AllScreen ({ navigation }) {
     return res
   }
 
-  const removeUpdate = async (itemList, display) => {
+  const removeUpdate = async (itemList, display, refresh) => {
     let result;
     for (var i=0; i < itemList.length; i++) {
       result = await removeExpired(itemList[i])
@@ -85,10 +103,13 @@ function AllScreen ({ navigation }) {
       setSnackState(result)
       setSnackVisible(true)
     }
+    if (refresh) {
+      createMainLists() 
+    }
+    return result
   }
 
   const proccessDate = (date) => {
-    console.log(date, "date")
     let first = date.indexOf('-')
     let second = date.indexOf('-',first+1)
 
@@ -101,26 +122,6 @@ function AllScreen ({ navigation }) {
     return newDate
   }
 
-  const checkForMonth = (date, checkDate) => {
-    if ((+date >= +checkDate) &&
-       ((date - 30*dayLength) < checkDate))
-    {
-      return true
-    } else {
-      return false
-    }
-  }
-
-  const checkForYear = (date, checkDate) => {
-    if ((date > checkDate) && 
-       ((date - 365*dayLength) < checkDate))
-    {
-      return true
-    } else {
-      return false
-    }
-  }
-
   const sortListByDate = (newList) => {
     newList.sort((a, b) => {
       return new Date(a.numDate) - new Date(b.numDate);
@@ -129,10 +130,11 @@ function AllScreen ({ navigation }) {
   }
 
   const createMainLists = async () => {
+    count = 0
+    setFetching(true)
+
     let newRemoveList = [];
-    let newMonthList = [];
-    let newYearList = [];
-    let newForeverList = [];
+    let formatList = [];
 
     let today = normaliseDate(new Date())
     let monthDate = normaliseDate(new Date()).setMonth(today.getMonth()+1)
@@ -149,36 +151,49 @@ function AllScreen ({ navigation }) {
     .then((response) => JSON.parse(response))
     .then((parsed_value) => {
       if (parsed_value == []) {
-        setMonthList([])
-        setYearList([])
-        setForeverList([])
         setItemList([])
         setFuzzyList(FuzzySet([],true,1))
-        setFetched(true)
         return
       }
-
-      newRemoveList = parsed_value.slice(0,removeIndex)
-      newMonthList = parsed_value.slice(removeIndex,monthIndex)
-      newYearList = parsed_value.slice(monthIndex,yearIndex)
-      newForeverList = parsed_value.slice(yearIndex,parsed_value.length)
-      
-      let newList = newMonthList.concat(newYearList,newForeverList)
       
       let temp = FuzzySet([],true,1)
-      for (var i=0; i < newList.length; i++) {
-        temp.add((newList[i].name.toUpperCase()))
+      for (var i=removeIndex; i < parsed_value.length; i++) {
+        temp.add((parsed_value[i].name.toUpperCase()))
       }
+
+      let amend = 0
+
+      if (parsed_value.length != 0) {
+        parsed_value.splice(removeIndex,0,{name:"This Month",date:"25-25-2525"})
+        amend += 1
+      } 
+      if (monthIndex + amend < parsed_value.length) {
+        parsed_value.splice(monthIndex+1,0,{name:"This Year",date:"25-25-2525"})
+        amend += 1
+      } 
+      if (yearIndex + amend < parsed_value.length) {
+        parsed_value.splice(yearIndex+2,0,{name:"Coming up",date:"25-25-2525"})
+      }
+
+      newRemoveList = parsed_value.splice(0,removeIndex)
+
+      formatList = parsed_value
+
       setFuzzyList(temp)
-      setItemList(newList)
+      setItemList(formatList)
     })
     .catch((err) => console.log(err))
 
-    removeUpdate(newRemoveList,false)
+    if (newRemoveList.length != 0) {
+      removeUpdate(newRemoveList,false, false)
+    } 
 
-    setMonthList(newMonthList)
-    setYearList(newYearList)
-    setForeverList(newForeverList)
+    setFormatedList(formatList)
+
+    setLoading(false)
+    setMainDisplay(true)
+    setFetching(false)
+
   }
 
   // ------ Search Code -----
@@ -195,7 +210,6 @@ function AllScreen ({ navigation }) {
       setMainDisplay(true)
       setSearchDisplay(false)
     }
-    console.log(matchWordToItemList(query), "matched")
     setSearchQuery(query)
     let matched = matchWordToItemList(query)
     if (matched == null) {
@@ -215,13 +229,61 @@ function AllScreen ({ navigation }) {
     setSearchList(tempList)
   }
 
+  // ----- FlatList render code ----
+
+  const renderItem = ({ item, index }) => {
+
+    if (item.date == "25-25-2525") {
+      return (
+      <View style={styles.monthHeader}>
+        <Text style={styles.monthText}>{item.name}</Text>
+      </View>
+      )
+    } else {
+    return (
+      <View style={{
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: colours[index % 2],
+        borderBottomWidth: 2,
+        borderBottomColor: 'black',
+      }}>
+        <Text style={styles.Label}>{item.name} </Text>
+        <Text style={styles.Date}>{item.date} </Text>
+        <View style={styles.iconBox}>
+          <IconButton
+            icon={require("../../assets/pencil.png")}
+            size={30}
+            onPress={() => showEditDialog(item)}
+            style={styles.pencil}
+          />
+          <IconButton
+            icon={require("../../assets/cross.png")}
+            size={30}
+            onPress={() => showDelDialog(item)}
+            style={styles.cross}
+          />
+        </View>
+      </View>
+    )}
+  }
+
+  const getItemKey = () => {
+    count += 1
+    return "" + count
+  }
+
 
   // ----- delete dialog code -----
 
   const hideDelDialog = async () => {
     setDeleteVisible(false)
     let result;
-    await removeUpdate([deleteItem],true).then((res) => result = res)
+    console.log(deleteItem)
+    await removeUpdate([deleteItem],true,true).then((res) => result = res)
+    console.log()
     setSnackState(result)
     setSnackVisible(true)
   }
@@ -251,7 +313,6 @@ function AllScreen ({ navigation }) {
   const hideEditDialog = async () => {
     setEditVisible(false);
     let result = false;
-    console.log(editName,editDate, "edit details")
     await addItem(editName,editDate)
     .then((res) => result = res)
     .catch((err) => console.log(err, "error"))
@@ -260,9 +321,8 @@ function AllScreen ({ navigation }) {
       setSnackVisible(true)
       return
     }
-    await removeExpired(editItem)
+    await removeUpdate([editItem],false,true)
     .then((res) => console.log(res, "result"))
-    .then(() => console.log(monthList, "Month list at end"))
     .catch((err) => console.log(err, "error"))
   }
 
@@ -313,161 +373,34 @@ function AllScreen ({ navigation }) {
           style={styles.searchStyle}
         />
       </View>
+    {loading && (
+      <View style={{marginTop: '50%'}}>
+       <ActivityIndicator animating={loading} color={"black"} size = {200}/>
+      </View>
+    )}
     {displayMain && (
-    <ScrollView style={styles.mainDisplay}>
-    {/*List of items that will expire within 1 month*/}
-    {monthList.length != 0 && (
+    <View style={styles.mainDisplay}>
       <View style={styles.rowContainer}>
-        <View style={styles.monthHeader}>
-          <Text style={styles.monthText}>This Month</Text>
-        </View>
-        {monthList.map((c, i) => {
-          colourCount = (colourCount + 1) % 2;
-          return [
-            <View key={i} style={{
-              flexDirection: 'row',
-              width: '100%',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              backgroundColor: colours[colourCount],
-              borderBottomWidth: 2,
-              borderBottomColor: 'black',
-            }}>
-              <Text style={styles.Label}>{c.name} </Text>
-              <Text style={styles.Date}>{c.date} </Text>
-              <View style={styles.iconBox}>
-                <IconButton
-                  icon={require("../../assets/pencil.png")}
-                  size={30}
-                  onPress={() => showEditDialog(c)}
-                  style={styles.pencil}
-                />
-                <IconButton
-                  icon={require("../../assets/cross.png")}
-                  size={30}
-                  onPress={() => showDelDialog(c)}
-                  style={styles.cross}
-                />
-              </View>
-            </View>
-          ]
-        })}
+        <FlatList
+          data={formatedList}
+          renderItem={renderItem}
+          extraData={fetching}
+          keyExtractor={getItemKey}
+        />
       </View>
+    </View>
     )}
-    {/*List of items that will expire within 1 year but not 1 month*/}
-    {yearList.length != 0 && (
+    {displaySearch && (
+    <View style={styles.mainDisplay}>
       <View style={styles.rowContainer}>
-        <View style={styles.monthHeader}>
-          <Text style={styles.monthText}>This Year</Text>
-        </View>
-        {yearList.map((c, i) => {
-          colourCount = (colourCount + 1) % 2;
-          return [
-            <View key={i} style={{
-              flexDirection: 'row',
-              width: '100%',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              backgroundColor: colours[colourCount],
-              borderBottomWidth: 2,
-              borderBottomColor: 'black',
-            }}>
-              <Text style={styles.Label}>{c.name} </Text>
-              <Text style={styles.Date}>{c.date} </Text>
-              <View style={styles.iconBox}>
-                <IconButton
-                  icon={require("../../assets/pencil.png")}
-                  size={30}
-                  onPress={() => showEditDialog(c)}
-                  style={styles.pencil}
-                />
-                <IconButton
-                  icon={require("../../assets/cross.png")}
-                  size={30}
-                  onPress={() => showDelDialog(c)}
-                  style={styles.cross}
-                />
-              </View>
-            </View>
-          ]
-        })}
+        <FlatList
+          data={searchList}
+          renderItem={renderItem}
+          extraData={fetching}
+          keyExtractor={getItemKey}
+        />
       </View>
-    )}
-    {/*Anything that is past 1 year goes here if it exists*/}
-    {foreverList.length != 0 && (
-      <View style={styles.rowContainer}>
-        <View style={styles.monthHeader}>
-          <Text style={styles.monthText}>Coming up</Text>
-        </View>
-        {foreverList.map((c, i) => {
-          colourCount = (colourCount + 1) % 2;
-          return [
-            <View key={i} style={{
-              flexDirection: 'row',
-              width: '100%',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              backgroundColor: colours[colourCount],
-              borderBottomWidth: 2,
-              borderBottomColor: 'black',
-            }}>
-              <Text style={styles.Label}>{c.name} </Text>
-              <Text style={styles.Date}>{c.date} </Text>
-              <View style={styles.iconBox}>
-                <IconButton
-                  icon={require("../../assets/pencil.png")}
-                  size={30}
-                  onPress={() => showEditDialog(c)}
-                  style={styles.pencil}
-                />
-                <IconButton
-                  icon={require("../../assets/cross.png")}
-                  size={30}
-                  onPress={() => showDelDialog(c)}
-                  style={styles.cross}
-                />
-              </View>
-            </View>
-          ]
-        })}
-      </View>
-    )}
-    </ScrollView>
-    )}
-    { displaySearch && (
-    <ScrollView style={styles.searchDisplay}>
-      {searchList.map((c, i) => {
-          colourCount = (colourCount + 1) % 2;
-          return [
-            <View key={i} style={{
-              flexDirection: 'row',
-              width: '100%',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              backgroundColor: colours[colourCount],
-              borderBottomWidth: 2,
-              borderBottomColor: 'black',
-            }}>
-              <Text style={styles.Label}>{c.name} </Text>
-              <Text style={styles.Date}>{c.date} </Text>
-              <View style={styles.iconBox}>
-                <IconButton
-                  icon={require("../../assets/pencil.png")}
-                  size={30}
-                  onPress={() => showEditDialog(c)}
-                  style={styles.pencil}
-                />
-                <IconButton
-                  icon={require("../../assets/cross.png")}
-                  size={30}
-                  onPress={() => showDelDialog(c)}
-                  style={styles.cross}
-                />
-              </View>
-            </View>
-          ]
-        })}
-    </ScrollView>
+    </View>
     )}
 
     <Portal>
@@ -553,7 +486,7 @@ function AllScreen ({ navigation }) {
     > {snackState ? 'Item removed' : 'Woops, something went wrong'}
     </Snackbar>
 		</View>
-	)
+  )
 }
 
 const styles = StyleSheet.create({
@@ -600,7 +533,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   rowContainer: {
-
+    height: '100%',
   },
   monthHeader: {
     width: '100%',

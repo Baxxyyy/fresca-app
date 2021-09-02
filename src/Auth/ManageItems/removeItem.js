@@ -1,3 +1,8 @@
+// Deprecated - use add/remove local food instead and sync
+
+
+// ------------===== DO NOT USE =====------------
+
 import hasAuth from '../hasAuth'
 import getKey from '../getKey'
 

@@ -1,6 +1,6 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, AppState, ScrollView } from 'react-native';
 import { Button, IconButton, Checkbox, Dialog, Portal, Snackbar } from 'react-native-paper';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -8,12 +8,37 @@ import { Tab, TabView } from 'react-native-elements';
 
 import SwipeableViews from 'react-swipeable-views-native';
 
-import getItems from '../Auth/ManageItems/getItems'
-import getNewItems from '../Auth/ManageItems/getNewItems'
-import removeItem from '../Auth/ManageItems/removeItem'
+import getKey from '../Auth/getKey';
 
+import Item from '../Auth/ManageItems/Item';
+import getItems from '../Auth/ManageItems/getItems';
+import removeLocalFood from '../Auth/ManageItems/removeLocalFood';
+import syncItems from '../Auth/ManageItems/syncItems';
+
+import findDatePlace from '../Auth/DateManage/findDatePlace';
 
 function TodayScreen ({navigation}) {
+
+	useEffect(() => {
+    const refresh = navigation.addListener('focus', () => {
+      syncItems();
+      createMainLists();
+    });
+    return refresh;
+  }, [navigation]);
+
+  const appState = useRef(AppState.currentState);
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", nextAppState => {
+      if (appState.current.match(/inactive|background/)) {
+        syncItems()
+      }
+    });
+    
+    try {
+      subscription.remove()
+    } catch (err) {}
+  }, []);
 
 	const [itemList, setItemList] = useState(new Array());
 
@@ -26,9 +51,8 @@ function TodayScreen ({navigation}) {
 
 	const [checkList, setCheckList] = useState(new Array());
 
-	const [fetched, setFetched] = useState(false);
-
 	const [visible, setVisible] = useState(false);
+	const [delItem, setDelItem] = useState(false);
 	const [section, setSection] = useState(-1);
 
 	const [snackVisible, setSnackVisible] = useState(false);
@@ -36,9 +60,12 @@ function TodayScreen ({navigation}) {
 
   const [tabIndex, setIndex] = useState(0);
 
+
+  // Date functions
+
 	const normaliseDate = (date) => {
   	date.setHours(0,0,0,0)
-  	date.setDate(date.getDate()+1)
+  	date.setDate(date.getDate())
   	return date
   }
 
@@ -55,143 +82,91 @@ function TodayScreen ({navigation}) {
   	return newDate
   }
 
-  const removeExpired = async (item) => {
-  	let result;
-		await removeItem(item)
-		.then((res) => result = res)
-		.catch((err) => console.log(err))
-		return result
+  // Main
+
+  const createMainLists = async () => {
+
+    let newRemoveList = [];
+    let newTodayList = [];
+    let newTomorrowList = [];
+    let newSoonList = [];
+
+    let today = normaliseDate(new Date())
+    let tomorrowDate = normaliseDate(new Date()).setDate(today.getDate()+1)
+    let soonDate = normaliseDate(new Date()).setDate(today.getDate()+2)
+    let endDate = normaliseDate(new Date()).setDate(today.getDate()+4)
+
+
+    let todayIndex = await findDatePlace(today)
+    let tomorrowIndex = await findDatePlace(tomorrowDate)
+    let soonIndex = await findDatePlace(soonDate)
+    let endIndex = await findDatePlace(endDate)
+
+    await getKey("DateItems")
+    .then((response) => JSON.parse(response))
+    .then((parsed_value) => {
+      if (parsed_value == []) {
+        setItemList([])
+        setTodayList([])
+    		setTomorrowList([])
+    		setSoonList([])
+        return
+      }
+      newTodayList = parsed_value.slice(todayIndex,tomorrowIndex)
+      newTomorrowList = parsed_value.slice(tomorrowIndex,soonIndex)
+      newSoonList = parsed_value.slice(soonIndex,endIndex)
+      setItemList(parsed_value)
+    })
+    .catch((err) => console.log(err))
+
+    setTodayList(newTodayList)
+    setTomorrowList(newTomorrowList)
+    setSoonList(newSoonList)
   }
-  
-  const checkForToday = (date, checkDate) => {
-  	if (+date == +checkDate) {
-  		return true
-  	} else {
-  		return false
-  	}
-  }
-
-  const checkForTomorrow = (date, checkDate) => {
-  	if (date > checkDate &&
-  	 	 (date - dayLength) == checkDate - 0) 
-  	{
-  		return true
-  	} else {
-  	 return false
-  	}
-  }
-
-  const checkForSoon = (date, checkDate) => {
-  	if ((date > checkDate)  &&
-  		 ((date - 4*dayLength) < checkDate))
-  	{
-  		return true
-  	} else {
-  		return false
-  	}
-  }
-
-	const loadItems = async () => {
-  	let newTodayList = [];
-  	let newTomorrowList = [];
-  	let newSoonList = [];
-
-  	let date;
-  	let currentDate = normaliseDate(new Date())
-  	
-  	await getItems()
-  	.then((response) => JSON.parse(response))
-  	// .then((parsed_value) => setItemList(parsed_value))
-  	.then((parsed_value) => {
-  		if (parsed_value == null) {
-  			setCheckList([])
-		  	setTodayList([])
-		  	setTomorrowList([])
-		  	setSoonList([])
-		  	setFetched(true)
-  			return
-  		}
-  		for (var i=0; i < parsed_value.length; i++) {
-  			date = parsed_value[i][1]
-  			date = proccessDate(date)
-
-  			if (date < currentDate) {
-  				removeExpired(parsed_value[i])
-  			} else if (checkForToday(date, currentDate)) {
-  				newTodayList.push(parsed_value[i])
-  			} else if (checkForTomorrow(date, currentDate)) {
-  				newTomorrowList.push(parsed_value[i])
-  			} else if (checkForSoon(date, currentDate)) {
-  				newSoonList.push(parsed_value[i])
-  			}
-  		}	
-  	})
-  	.catch((err) => console.log(err))
-  	let newCheckList = []
-  	for (var i=0; i < (newTodayList.length + newTomorrowList.length +
-  										 newSoonList.length);i++)
-  	{
-  		newCheckList.push(false)
-  	}
-  	setCheckList(newCheckList)
-  	setTodayList(newTodayList)
-  	setTomorrowList(newTomorrowList)
-  	setSoonList(newSoonList)
-  	setFetched(true)
-  }
-
-  if (!fetched) {loadItems()}
 
   const refreshItems = async () => {
-  	await getNewItems().catch((err) => console.log(err))
+  	await getItems().catch((err) => console.log(err))
   	await loadItems().catch((err) => console.log(err))
   }
 
-	const dealWithDelete = async () => {
-		console.log("A")
-		let start = 0;
-		let end = 0;
-		let newList;
-		let result = false;
-		if (section == 0) {
-			start = 0
-			end = todayList.length
-		} else if (section == 1) {
-			start = todayList.length
-			end = todayList.length + tomorrowList.length
-		} else if (section == 2) {
-			start = todayList.length + tomorrowList.length
-			end = todayList.length + tomorrowList.length + soonList.length + 1
-		}
+  // Deletion functions
 
-		newList = checkList.slice(start,end)
-		for (var i=0; i < newList.length; i++) {
-			if (newList[i] == true) {
-				if (section == 0) {
-					await removeExpired(todayList[i]).then((res) => result = res)
-				} else if (section == 1) {
-					await removeExpired(tomorrowList[i]).then((res) => result = res)
-				} else {
-					await removeExpired(soonList[i]).then((res) => result = res)
-				}
-			}
-		}
-		return result;
-	}
+  const removeExpired = async (item) => {
+    let res = await removeLocalFood(item)
+    return res
+  }
+
+  const removeUpdate = async (itemList, display, refresh) => {
+    let result;
+    for (var i=0; i < itemList.length; i++) {
+      result = await removeExpired(itemList[i])
+      if (!result) {
+        break
+      }
+    }
+    if (display) {
+      setSnackState(result)
+      setSnackVisible(true)
+    }
+    if (refresh) {
+      createMainLists() 
+    }
+    return result
+  }
 
 	const hideDialog = async (item) => {
 		setVisible(false)
 		let result;
-		await dealWithDelete().then((res) => result = res)
+		await removeUpdate([item],true,true).then((res) => result = res);
 		setSnackState(result)
-		await refreshItems().catch((err) => console.log(err))
-		await loadItems().catch((err) => console.log(err))
 		setSnackVisible(true)
 	}
 
 	const cancelDialog = () => {
 		setVisible(false)
 	}
+
+	// Snack functions
 
 	const onDismissSnack = () => {
   	setSnackVisible(false)
@@ -220,26 +195,18 @@ function TodayScreen ({navigation}) {
 				<View style={styles.todayBox}>
 					<View style={styles.todayTitleBorder}>
 						<Text style={styles.contentTitle}>Today</Text>
-						<IconButton
-							icon={require("../../assets/cross.png")}
-							size={30}
-							onPress={() => {
-								setSection(0) 
-								setVisible(true)
-							}}
-						/>
 					</View>
 					<ScrollView style={styles.scrollArea}>
 						{todayList.map((c, i) => {
 							return [
 								<View key={i} style={styles.TextBox}>
-									<Text key={i} style={styles.Label}>{c[0]}</Text>
-									<Checkbox
-										status={checkList[i] ? 'checked' : 'unchecked'}
-										onPress={() => {
-											let tmp = checkList.slice(0)
-											tmp[i] = !tmp[i]
-											setCheckList(tmp)
+									<Text key={i} style={styles.Label}>{c.name}</Text>
+									<IconButton
+										icon={require("../../assets/cross.png")}
+										size={30}
+										onPress={() => { 
+											setDelItem(c) 
+											setVisible(true)
 										}}
 									/>
 								</View>
@@ -251,26 +218,18 @@ function TodayScreen ({navigation}) {
 				<View style={styles.tomorrowBox}>
 					<View style={styles.tomorrowTitleBorder}>
 						<Text style={styles.contentTitle}>Tomorrow</Text>
-						<IconButton
-							icon={require("../../assets/cross.png")}
-							size={30}
-							onPress={() => {
-								setSection(1)
-								setVisible(true)
-							}}
-						/>
 					</View>
 					<ScrollView style={styles.scrollArea}>
 						{tomorrowList.map((c, i) => {
 							return [
 								<View key={i} style={styles.TextBox}>
-									<Text key={i} style={styles.Label}>{c[0]}</Text>
-									<Checkbox
-										status={checkList[i+todayList.length] ? 'checked' : 'unchecked'}
-										onPress={() => {
-											let tmp = checkList.slice(0)
-											tmp[i+todayList.length] = !tmp[i+todayList.length]
-											setCheckList(tmp)
+									<Text key={i} style={styles.Label}>{c.name}</Text>
+									<IconButton
+										icon={require("../../assets/cross.png")}
+										size={30}
+										onPress={() => { 
+											setDelItem(c) 
+											setVisible(true)
 										}}
 									/>
 								</View>
@@ -282,26 +241,18 @@ function TodayScreen ({navigation}) {
 				<View style={styles.soonBox}>
 					<View style={styles.soonTitleBorder}>
 						<Text style={styles.contentTitle}>2-3 Days</Text>
-						<IconButton
-							icon={require("../../assets/cross.png")}
-							size={30}
-							onPress={() => {
-								setSection(2)
-								setVisible(true)
-							}}
-						/>
 					</View>
 					<ScrollView style={styles.scrollArea}>
 						{soonList.map((c, i) => {
 							return [
 								<View key={i} style={styles.TextBox}>
-									<Text key={i} style={styles.Label}>{c[0]}</Text>
-									<Checkbox
-										status={checkList[i+todayList.length+tomorrowList.length] ? 'checked' : 'unchecked'}
+									<Text key={i} style={styles.Label}>{c.name}</Text>
+									<IconButton
+										icon={require("../../assets/cross.png")}
+										size={30}
 										onPress={() => {
-											let tmp = checkList.slice(0)
-											tmp[i+todayList.length+tomorrowList.length] = !tmp[i+todayList.length+tomorrowList.length]
-											setCheckList(tmp)
+											setDelItem(c) 
+											setVisible(true)
 										}}
 									/>
 								</View>
@@ -310,6 +261,8 @@ function TodayScreen ({navigation}) {
 					</ScrollView>
 				</View>
 			</SwipeableViews>
+
+
 			<Portal>
 				<Dialog 
 				dismissable={false}
@@ -318,11 +271,11 @@ function TodayScreen ({navigation}) {
 				style={styles.popupStyle}>
 					<Dialog.Title style={styles.newTitle}>Confirm</Dialog.Title>
 					<Dialog.Content>
-						<Text style={styles.confirm}>Are you sure you want to delete all selected items?</Text>
+						<Text style={styles.confirm}>Are you sure you want to delete this item?</Text>
 					</Dialog.Content>
 					<Dialog.Actions>
 						<Button onPress={cancelDialog}>Cancel</Button>
-						<Button onPress={() => hideDialog()}>
+						<Button onPress={() => hideDialog(delItem)}>
 							Confirm
 						</Button>
 					</Dialog.Actions>

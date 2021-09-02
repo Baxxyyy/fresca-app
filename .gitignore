@@ -11,3 +11,16 @@ web-build/
 
 # macOS
 .DS_Store
+
+# Django
+db.sqlite3
+staticfiles/
+__pycache__/
+
+# Funnies
+awsScripts/
+
+# private stuff
+settings.ini
+portScript.py
+workers.sh

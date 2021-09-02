@@ -12,6 +12,10 @@ const syncItems = async () => {
 	let removeFoods = await getKey("removeList");
 	let addFoods = await getKey("addItems");
 
+	if (removeFoods == null && addFoods == null) {
+		return 1
+	}
+
 	if (removeFoods == null) {
 		removeFoods = "[]"
 	}
@@ -39,7 +43,6 @@ const syncItems = async () => {
 		})})
 		.then((response) => response.json()) 
 		.then((data) => {
-			console.log("first", data)
 			data = JSON.parse(data)
 			if (data == '1') {
 				removeLocalItem("removeList")

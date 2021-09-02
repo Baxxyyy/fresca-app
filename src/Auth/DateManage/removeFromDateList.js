@@ -25,7 +25,7 @@ const removeFromDateList = async (item) => {
 	foods = JSON.parse(foods)
 
 	for (var i = 0; i < foods.length; i++) {
-		if (foods[i][0] == item[0] && foods[i][1] == item[1]) {
+		if (foods[i].name == item.name && foods[i].date == item.date) {
 			foods.splice(i,1)
 			break
 		}
@@ -35,10 +35,10 @@ const removeFromDateList = async (item) => {
 	let removals = await getKey("removeList")
 	if (removals != null) {
 		removals = JSON.parse(removals)
-		removals.push(item)
+		removals.push([item.name,item.date])
 		storeItems("removeList", removals)
 	} else {
-		storeItems("removeList", [item])
+		storeItems("removeList", [[item.name,item.date]])
 	}
 }
 
