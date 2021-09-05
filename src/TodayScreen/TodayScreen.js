@@ -183,9 +183,9 @@ function TodayScreen ({navigation}) {
 				<Text style={styles.headerText}>Eat Up</Text>
 			</View>
 			<View style={styles.tabBox}>
-				<Button color="black" disabled={tabIndex != 0}> Today </Button>
-				<Button color="black" disabled={tabIndex != 1}> Tomorrow </Button>
-				<Button color="black" disabled={tabIndex != 2}> Soon </Button>
+				<Button color="black" disabled={tabIndex != 0} style={styles.tabButton}> Today </Button>
+				<Button color="black" disabled={tabIndex != 1} style={styles.tabButton}> Tomorrow </Button>
+				<Button color="black" disabled={tabIndex != 2} style={styles.tabButton}> Soon </Button>
 			</View>
 			<SwipeableViews
 			 style={styles.content} 
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   	fontSize: 30,
   },
   tabBox: {
-  	backgroundColor: '#97ecb3',
+  	backgroundColor: '#adf7ff',
   	width: '100%',
   	flexDirection: 'row',
   	borderBottomColor: 'black',
@@ -364,9 +364,7 @@ const styles = StyleSheet.create({
   	justifyContent: 'space-between',
   },
   tabButton: {
-  	backgroundColor: '#97ecb3',
-  	borderBottomColor: 'black',
-  	borderBottomWidth: 2,
+
   },
   todayBox: {
   	flex:1,

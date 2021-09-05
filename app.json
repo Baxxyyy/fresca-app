@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fresca",
     "slug": "Fresca",
-    "version": "1.1.0",
+    "version": "2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -25,7 +25,9 @@
         "backgroundColor": "#FFFFFF"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.baxxyy.test_app"
+      "package": "com.baxxyy.test_app",
+      "permissions": [],
+      "versionCode": 2,
     },
     "web": {
       "favicon": "./assets/favicon.png"

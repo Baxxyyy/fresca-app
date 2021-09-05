@@ -7,9 +7,11 @@ import { Button, IconButton, TextInput, Dialog, Portal, Snackbar,} from 'react-n
 import getKey from '../Auth/getKey';
 import storeItem from '../Auth/storeItem';
 
+import createDateList from '../Auth/DateManage/createDateList';
+
 import removeLocalItem from '../Auth/ManageItems/removeLocalItem';
 import syncItems from '../Auth/ManageItems/syncItems';
-
+import getNewItems from '../Auth/ManageItems/getNewItems';
 
 import getEmail from '../Auth/Users/getEmail';
 import changeEmail from '../Auth/Users/changeEmail';
@@ -47,6 +49,13 @@ function SettingsScreen ({navigation}) {
     getKey("email")
     .then((email) => setCurrentEmail(email))
     .catch((err) => console.log("An error has occured: ", err))
+  }
+
+  const refresh = async () => {
+    await getNewItems();
+    await createDateList();
+    setESnackMsg("Items refreshed")
+    setEmailSnack(true)
   }
 
   const logout = (navigation) => {
@@ -132,6 +141,9 @@ function SettingsScreen ({navigation}) {
 				<Text style={styles.headerText}>Settings</Text>
 			</View>
       <View style={styles.content}>
+        <View style={styles.settingsBox}>
+          <SettingBox text="Refresh Items" function={() => {refresh()}} />
+        </View>
         <View style={styles.settingsBox}>
           <SettingBox text="Logout" function={() => {logout(navigation)}} />
         </View>
@@ -305,11 +317,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingsBox: {
+    backgroundColor: '#eeeeee',
     borderColor: '#818181',
     borderWidth: 5,
     borderRadius: 10,
-    paddingTop: 10,
-    paddingBottom: 10,
     marginBottom: 20,
     width: '95%',
   },

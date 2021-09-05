@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   	fontSize: 40,
   },
   top: {
-  	flex:0.5,
+  	flex:0.35,
   	justifyContent: 'center',
   	width: '90%'
   },
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   	fontSize: 18,
   },
   bottom: {
-  	flex:0.5,
+  	flex:0.65,
   	width: "100%",
   	borderTopColor: 'grey',
   	borderTopWidth: 2,
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   	alignSelf: 'flex-end',
   },
   quickLabel: {
-  	fontSize: 40,
+  	fontSize: 25,
   },
   quickButton: {
   	borderBottomWidth: 3,
