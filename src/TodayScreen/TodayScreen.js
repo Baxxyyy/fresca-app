@@ -1,12 +1,10 @@
 import React, {useState, useEffect, useRef} from 'react';
 
-import { StyleSheet, Text, View, AppState, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, AppState, ScrollView, useWindowDimensions } from 'react-native';
 import { Button, IconButton, Checkbox, Dialog, Portal, Snackbar } from 'react-native-paper';
 
-import { NavigationContainer } from '@react-navigation/native';
-import { Tab, TabView } from 'react-native-elements';
-
 import SwipeableViews from 'react-swipeable-views-native';
+import { TabView, SceneMap } from 'react-native-tab-view';
 
 import getKey from '../Auth/getKey';
 
@@ -16,6 +14,26 @@ import removeLocalFood from '../Auth/ManageItems/removeLocalFood';
 import syncItems from '../Auth/ManageItems/syncItems';
 
 import findDatePlace from '../Auth/DateManage/findDatePlace';
+
+const MapList = (useList) => {
+	<ScrollView style={styles.scrollArea}>
+		{useList.map((c, i) => {
+			return [
+				<View key={i} style={styles.TextBox}>
+					<Text key={i} style={styles.Label}>{c.name}</Text>
+					<IconButton
+						icon={require("../../assets/cross.png")}
+						size={30}
+						onPress={() => { 
+							setDelItem(c) 
+							setVisible(true)
+						}}
+					/>
+				</View>
+			]
+		})}
+	</ScrollView>
+}
 
 function TodayScreen ({navigation}) {
 
@@ -172,6 +190,8 @@ function TodayScreen ({navigation}) {
   	setSnackVisible(false)
   }
 
+	// Main body
+
 	return (
 		<View style={styles.container}>
 			<View style={styles.header}>
@@ -187,12 +207,11 @@ function TodayScreen ({navigation}) {
 				<Button color="black" disabled={tabIndex != 1} style={styles.tabButton}> Tomorrow </Button>
 				<Button color="black" disabled={tabIndex != 2} style={styles.tabButton}> Soon </Button>
 			</View>
-			<SwipeableViews
+			{/*<SwipeableViews
 			 style={styles.content} 
 			 onSwitching={(i) => setIndex(i)}
-			 >
-			 {/*// today box*/}
-				<View style={styles.todayBox}>
+			 >				
+			 <View style={styles.todayBox}>
 					<View style={styles.todayTitleBorder}>
 						<Text style={styles.contentTitle}>Today</Text>
 					</View>
@@ -214,7 +233,6 @@ function TodayScreen ({navigation}) {
 						})}
 					</ScrollView>
 				</View>
-			{/*// tomorrow box*/}
 				<View style={styles.tomorrowBox}>
 					<View style={styles.tomorrowTitleBorder}>
 						<Text style={styles.contentTitle}>Tomorrow</Text>
@@ -237,7 +255,6 @@ function TodayScreen ({navigation}) {
 						})}
 					</ScrollView>
 				</View>
-			{/*// Soon box*/}
 				<View style={styles.soonBox}>
 					<View style={styles.soonTitleBorder}>
 						<Text style={styles.contentTitle}>2-3 Days</Text>
@@ -259,6 +276,30 @@ function TodayScreen ({navigation}) {
 							]
 						})}
 					</ScrollView>
+				</View>
+			</SwipeableViews>*/}
+
+			<SwipeableViews
+			 style={styles.content} 
+			 onSwitching={(i) => setIndex(i)}
+			 >				
+			 <View style={styles.todayBox}>
+					<View style={styles.todayTitleBorder}>
+						<Text style={styles.contentTitle}>Today</Text>
+					</View>
+					<MapList useList={todayList} />
+				</View>
+				<View style={styles.tomorrowBox}>
+					<View style={styles.tomorrowTitleBorder}>
+						<Text style={styles.contentTitle}>Tomorrow</Text>
+					</View>
+					<MapList useList={tomorrowList} />
+				</View>
+				<View style={styles.soonBox}>
+					<View style={styles.soonTitleBorder}>
+						<Text style={styles.contentTitle}>2-3 Days</Text>
+					</View>
+					<MapList useList={soonList} />
 				</View>
 			</SwipeableViews>
 

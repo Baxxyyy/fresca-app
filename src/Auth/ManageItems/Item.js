@@ -1,4 +1,3 @@
-
 class Item {
 	constructor(name,date) {
 		this.name = name;

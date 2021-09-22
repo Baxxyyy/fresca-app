@@ -14,7 +14,9 @@ import RegisterScreen from './src/LoginScreen/RegisterScreen';
 import HomeScreen from './src/HomeScreen/HomeScreen';
 import SplashScreen from './src/SplashScreen/SplashScreen';
 
-import AddScreen from './src/AddScreen/AddScreen';
+import ManuelAddScreen from './src/AddScreen/Manuel/ManuelAddScreen';
+
+
 import TodayScreen from './src/TodayScreen/TodayScreen';
 import AllScreen from './src/AllScreen/AllScreen';
 
@@ -54,8 +56,8 @@ function App() {
           options={{ headerShown: false}}
         />
         <Stack.Screen
-          name="AddScreen"
-          component={AddScreen}
+          name="ManuelAddScreen"
+          component={ManuelAddScreen}
           options={{ headerShown: false}}
         />
         <Stack.Screen

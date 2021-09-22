@@ -20,6 +20,46 @@ import syncItems from '../Auth/ManageItems/syncItems';
 
 import getKey from '../Auth/getKey';
 
+let colours = ['#fbffea','#f7ffad'];
+
+
+const MonthHeader = ({ name }) => (
+  <View style={styles.monthHeader}>
+    <Text style={styles.monthText}>{name}</Text>
+  </View>
+);
+
+const RowItem = ({item, index}) => (
+  <View style={{
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: colours[index % 2],
+    borderBottomWidth: 2,
+    borderBottomColor: 'black',
+  }}>
+    <Text style={styles.Label}>{item.name} </Text>
+    <Text style={styles.Date}>{item.date} </Text>
+    <View style={styles.iconBox}>
+      <IconButton
+        icon={require("../../assets/pencil.png")}
+        size={30}
+        onPress={() => showEditDialog(item)}
+        style={styles.pencil}
+      />
+      <IconButton
+        icon={require("../../assets/cross.png")}
+        size={30}
+        onPress={() => showDelDialog(item)}
+        style={styles.cross}
+      />
+    </View>
+  </View>
+)
+
+
+
 function AllScreen ({ navigation }) {
 
   useEffect(() => {
@@ -59,7 +99,7 @@ function AllScreen ({ navigation }) {
 
   const dayLength = 86400000;
 
-  let colours = ['#fbffea','#f7ffad'];
+
   let count = 0
 
   const [searchQuery, setSearchQuery] = React.useState('');

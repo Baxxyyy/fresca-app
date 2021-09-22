@@ -109,7 +109,7 @@ function HomeScreen({ navigation }) {
 					style={styles.button}
 					contentStyle={styles.buttonStyle}
 					mode="contained"
-					onPress={() => {navigation.navigate('AddScreen')}}
+					onPress={() => {navigation.navigate('ManuelAddScreen')}}
 					>
 					ADD NEW ITEMS
 				</Button>

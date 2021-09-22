@@ -10,12 +10,12 @@ import { Button, IconButton, TextInput, Dialog, Portal, Snackbar, Searchbar } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-import addItem from './addItem';
-import getItems from '../Auth/ManageItems/getItems';
-import getNewItems from '../Auth/ManageItems/getNewItems';
-import syncItems from '../Auth/ManageItems/syncItems';
+import addItem from '../addItem';
+import getItems from '../../Auth/ManageItems/getItems';
+import getNewItems from '../../Auth/ManageItems/getNewItems';
+import syncItems from '../../Auth/ManageItems/syncItems';
 
-function AddScreen ({ navigation }) {
+function ManuelAddScreen ({ navigation }) {
 
 	useEffect(() => {
     const refresh = navigation.addListener('focus', () => {
@@ -225,7 +225,7 @@ function AddScreen ({ navigation }) {
 		<View style={styles.container}>
 			<View style={styles.header}>
 				<IconButton
-					icon={require("../../assets/arrow-top-left.png")}
+					icon={require("../../../assets/arrow-top-left.png")}
 					size={30}
 					onPress={() => {navigation.goBack()}}
 				/>
@@ -310,7 +310,7 @@ function AddScreen ({ navigation }) {
 						backgroundColor: '#ffdead',
 					 	width: '11.8%'}}>
 						<IconButton
-							icon={require("../../assets/reload.png")}
+							icon={require("../../../assets/reload.png")}
 							size={30}
 							onPress={() => refreshItems()}
 							style={styles.refeshIcon}
@@ -508,4 +508,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddScreen;
+export default ManuelAddScreen;
