@@ -12,7 +12,7 @@ const hasAuth = async (username,token) => {
 		       'Accept': 'application/json',
 		       'Content-Type': 'application/json' 
 		       },
-		body: JSON.stringify({username:username,token:token})
+		data: JSON.stringify({username:username,token:token})
 		})
 		.then((response) => response.json()) 
 		.then((data) => {
